@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
@@ -9,6 +10,9 @@ namespace OpenExcel.OfficeOpenXml.Internal
     public class DocumentStyles
     {
         private WorkbookPart _wpart;
+        protected Dictionary<int, CellFormat> cellFormatHash = new Dictionary<int,CellFormat>();
+
+
 
         public DocumentStyles(WorkbookPart wpart)
         {
@@ -68,7 +72,7 @@ namespace OpenExcel.OfficeOpenXml.Internal
             return null;
         }
 
-        public void MergeFont(Font fontNew, Font fontTarget)
+        public Font MergeFont(Font fontNew, Font fontTarget)
         {
             if (fontNew.FontCharSet != null)
                 fontTarget.FontCharSet.Val = fontNew.FontCharSet.Val;
@@ -82,20 +86,40 @@ namespace OpenExcel.OfficeOpenXml.Internal
                 fontTarget.FontSize.Val = fontNew.FontSize.Val;
             if (fontNew.Bold != null)
             {
-                fontTarget.Bold = fontTarget.Bold ?? new Bold();
-                fontTarget.Bold.Val = fontNew.Bold.Val;
+                if (fontNew.Bold.Val == "0")
+                    fontTarget.Bold = null;
+                else
+                {
+                    fontTarget.Bold = fontTarget.Bold ?? new Bold();
+                    fontTarget.Bold.Val = fontNew.Bold.Val;
+                }
+            }
+            else
+            {
+                fontTarget.Bold = null;
             }
             if (fontNew.Italic != null)
             {
-                fontTarget.Italic = fontTarget.Italic ?? new Italic();
-                fontTarget.Italic.Val = fontNew.Italic.Val;
+                if (fontNew.Italic.Val == "0")
+                    fontTarget.Italic = null;
+                else
+                {
+                    fontTarget.Italic = fontTarget.Italic ?? new Italic();
+                    fontTarget.Italic.Val = fontNew.Italic.Val;
+                }
             }
+            return fontTarget;
+        }
+
+        protected bool compareFont(Font fNew, Font fBase)
+        {
+            return GenericElementCompare(fNew, fBase);
         }
 
         public uint MergeAndRegisterFont(Font fNew, UInt32Value baseFontsIdx, bool doSave)
         {
             Stylesheet ss = EnsureStylesheet();
-            uint ret = MergeAndRegisterStyleElement<Font, Fonts>(fNew, ss.Fonts, MergeFont, GenericElementCompare, baseFontsIdx, doSave);
+            uint ret = MergeAndRegisterStyleElement<Font, Fonts>(fNew, ss.Fonts, MergeFont, compareFont, baseFontsIdx, doSave);
             if (ss.Fonts.Count != (uint)ss.Fonts.Count())
             {
                 ss.Fonts.Count = (uint)ss.Fonts.Count();
@@ -110,11 +134,8 @@ namespace OpenExcel.OfficeOpenXml.Internal
             Stylesheet ss = _wpart.WorkbookStylesPart.Stylesheet;
             return ss.Borders.Elements<Border>().ElementAt((int)idx);
         }
-
-        public uint MergeAndRegisterBorder(Border bNew, UInt32Value baseBordersIdx, bool doSave)
+        public Border borderCombine(Border elemNew, Border elemBase)
         {
-            Action<Border, Border> fnCombine = (elemNew, elemBase) =>
-            {
                 if (elemNew.TopBorder != null)
                     elemBase.TopBorder = (TopBorder)elemNew.TopBorder.CloneNode(true);
                 if (elemNew.BottomBorder != null)
@@ -125,11 +146,53 @@ namespace OpenExcel.OfficeOpenXml.Internal
                     elemBase.RightBorder = (RightBorder)elemNew.RightBorder.CloneNode(true);
                 if (elemNew.DiagonalBorder != null)
                     elemBase.DiagonalBorder = (DiagonalBorder)elemNew.DiagonalBorder.CloneNode(true);
-            };
+                return elemBase; 
+        }
 
+
+        
+        protected bool compareBorder(Border bNew, Border bOld)
+        {
+            return GenericElementCompare(bNew, bOld);
+
+        }
+        int b_count = -1;//ugly, i know...
+        //there is only 1 custom type of border, so dont need to realy compare them,
+        // first one - will be the default one, second - custom
+        protected bool compareBorderFake(Border bNew, Border bOld)
+        {
+            if (b_count <= 0)
+            {
+                b_count++;
+                return false;
+            }
+            else
+            {
+                b_count = 0;
+                return true;
+            }
+            
+
+        }
+
+        public uint MergeAndRegisterBorder(Border bNew, UInt32Value baseBordersIdx, bool doSave)
+        {
+         
             Stylesheet ss = EnsureStylesheet();
-            uint ret = MergeAndRegisterStyleElement<Border, Borders>(bNew, ss.Borders,
-                fnCombine, GenericElementCompare, baseBordersIdx, doSave);
+
+            uint ret;
+            if (baseBordersIdx == "0")
+            {
+                ret = MergeAndRegisterStyleElement<Border, Borders>(bNew, ss.Borders,
+                    borderCombine, compareBorderFake, baseBordersIdx, doSave);
+            }
+            else
+            {
+                ret = MergeAndRegisterStyleElement<Border, Borders>(bNew, ss.Borders,
+                    borderCombine, compareBorder, baseBordersIdx, doSave);
+            }
+
+            
             if (ss.Borders.Count != (uint)ss.Borders.Count())
             {
                 ss.Borders.Count = (uint)ss.Borders.Count();
@@ -145,31 +208,37 @@ namespace OpenExcel.OfficeOpenXml.Internal
             return ss.Fills.Elements<Fill>().ElementAt((int)idx);
         }
 
-        public uint MergeAndRegisterFill(Fill fNew, UInt32Value baseFillsIdx, bool doSave)
+
+        protected Fill fillCombine(Fill elemNew, Fill elemBase)
         {
-            Action<Fill, Fill> fnCombine = (elemNew, elemBase) =>
+            // Appears that Fill object clears GradientFill when PatternFill is set and vice-versa
+            if (elemNew.PatternFill != null)
             {
-                // Appears that Fill object clears GradientFill when PatternFill is set and vice-versa
-                if (elemNew.PatternFill != null)
-                {
-                    elemBase.PatternFill = (PatternFill)elemNew.PatternFill.CloneNode(true);
-                }
-                else if (elemNew.GradientFill != null)
-                {
-                    elemBase.GradientFill = (GradientFill)elemNew.GradientFill.CloneNode(true);
-                }
-            };
-            Func<Fill, Fill, bool> fnCompare = (fill1, fill2) =>
+                elemBase.PatternFill = (PatternFill)elemNew.PatternFill.CloneNode(true);
+            }
+            else if (elemNew.GradientFill != null)
             {
+                elemBase.GradientFill = (GradientFill)elemNew.GradientFill.CloneNode(true);
+            }
+            return elemBase;
+        }
+
+        protected bool fillCompare(Fill fill1, Fill fill2)
+        {
                 bool match = true;
+           
                 if (fill1.InnerXml != fill2.InnerXml)
                     match = false;
                 return match;
-            };
+        }
+
+        public uint MergeAndRegisterFill(Fill fNew, UInt32Value baseFillsIdx, bool doSave)
+        {
+           
 
             Stylesheet ss = EnsureStylesheet();
             uint ret = MergeAndRegisterStyleElement<Fill, Fills>(fNew, ss.Fills,
-                fnCombine, fnCompare, baseFillsIdx, doSave);
+                fillCombine, fillCompare, baseFillsIdx, doSave);
             if (ss.Fills.Count != (uint)ss.Fills.Count())
             {
                 ss.Fills.Count = (uint)ss.Fills.Count();
@@ -185,53 +254,72 @@ namespace OpenExcel.OfficeOpenXml.Internal
             return ss.CellFormats.Elements<CellFormat>().ElementAt((int)idx);
         }
 
+        protected CellFormat formatCombine(CellFormat elemNew, CellFormat elemBase)
+        {
+            if (elemNew.ApplyNumberFormat != null && elemNew.ApplyNumberFormat.Value)
+            {
+                elemBase.NumberFormatId = elemNew.NumberFormatId;
+                elemBase.ApplyNumberFormat = elemNew.ApplyNumberFormat;
+            }
+
+            if (elemNew.ApplyFont != null && elemNew.ApplyFont.Value)
+            {
+                elemBase.FontId = elemNew.FontId;
+                elemBase.ApplyFont = elemNew.ApplyFont;
+            }
+
+            if (elemNew.ApplyBorder != null && elemNew.ApplyBorder.Value)
+            {
+                elemBase.BorderId = elemNew.BorderId;
+                elemBase.ApplyBorder = elemNew.ApplyBorder;
+            }
+
+            if (elemNew.ApplyFill != null && elemNew.ApplyFill.Value)
+            {
+                elemBase.FillId = elemNew.FillId;
+                elemBase.ApplyFill = elemNew.ApplyFill;
+            }
+            if (elemNew.FormatId != null)
+                elemBase.FormatId = elemNew.FormatId;
+            else
+                elemBase.FormatId = null;
+
+            return elemBase;
+        }
+
+        protected bool formatCompare(CellFormat cfToTest, CellFormat cfExisting)
+        {
+            bool match = true;
+
+            if ((cfToTest.NumberFormatId != cfExisting.NumberFormatId && (cfToTest.NumberFormatId == null || cfExisting.NumberFormatId == null)) ||
+                ((cfToTest.NumberFormatId != null && cfExisting.NumberFormatId != null) && (cfToTest.NumberFormatId.InnerText != cfExisting.NumberFormatId.InnerText)))
+                match = false;
+            if((cfToTest.FillId != cfExisting.FillId && (cfToTest.FillId == null || cfExisting.FillId == null)) || 
+                ((cfToTest.FillId != null && cfExisting.FillId != null) && (cfToTest.FillId.InnerText != cfExisting.FillId.InnerText)))
+                match = false;
+            if ((cfToTest.BorderId != cfExisting.BorderId && (cfToTest.BorderId == null || cfExisting.BorderId == null)) ||
+                ((cfToTest.BorderId != null && cfExisting.BorderId != null) && (cfToTest.BorderId.InnerText != cfExisting.BorderId.InnerText)))
+                match = false;
+            if ((cfToTest.FontId != cfExisting.FontId && (cfToTest.FontId == null || cfExisting.FontId == null)) ||
+                ((cfToTest.FontId != null && cfExisting.FontId != null) && (cfToTest.FontId.InnerText != cfExisting.FontId.InnerText)))
+                match = false;
+            if ((cfToTest.FormatId != cfExisting.FormatId && (cfToTest.FormatId == null || cfExisting.FormatId == null)) ||
+                ((cfToTest.FormatId != null && cfExisting.FormatId != null) && (cfToTest.FormatId.InnerText != cfExisting.FormatId.InnerText)))
+                match = false;
+            return match;
+        }
+
         public uint MergeAndRegisterCellFormat(CellFormat cfNew, UInt32Value baseCellXfsIdx, bool doSave)
         {
             if (cfNew.NumberFormatId == null)
                 cfNew.NumberFormatId = 0;
 
-            Action<CellFormat, CellFormat> fnCombine = (elemNew, elemBase) =>
-            {
-                if (elemNew.ApplyNumberFormat != null && elemNew.ApplyNumberFormat.Value)
-                    elemBase.NumberFormatId = elemNew.NumberFormatId;
-                elemBase.ApplyNumberFormat = elemNew.ApplyNumberFormat;
-
-                if (elemNew.ApplyFont != null && elemNew.ApplyFont.Value)
-                    elemBase.FontId = elemNew.FontId;
-                elemBase.ApplyFont = elemNew.ApplyFont;
-
-                if (elemNew.ApplyBorder != null && elemNew.ApplyBorder.Value)
-                    elemBase.BorderId = elemNew.BorderId;
-                elemBase.ApplyBorder = elemNew.ApplyBorder;
-
-                if (elemNew.ApplyFill != null && elemNew.ApplyFill.Value)
-                    elemBase.FillId = elemNew.FillId;
-                elemBase.ApplyFill = elemNew.ApplyFill;
-
-                if (elemNew.FormatId != null)
-                    elemBase.FormatId = elemNew.FormatId;
-                else
-                    elemBase.FormatId = null;
-            };
-            Func<CellFormat, CellFormat, bool> fnCompare = (cfToTest, cfExisting) =>
-            {
-                bool match = true;
-                if (cfToTest.NumberFormatId != null && cfToTest.NumberFormatId != cfExisting.NumberFormatId)
-                    match = false;
-                if (cfToTest.FontId != null && cfToTest.FontId != cfExisting.FontId)
-                    match = false;
-                if (cfToTest.BorderId != null && cfToTest.BorderId != cfExisting.BorderId)
-                    match = false;
-                if (cfToTest.FillId != null && cfToTest.FillId != cfExisting.FillId)
-                    match = false;
-                if (cfToTest.FormatId != null && cfToTest.FormatId != cfExisting.FormatId)
-                    match = false;
-                return match;
-            };
+            
+          // ww
 
             Stylesheet ss = EnsureStylesheet();
             uint ret = MergeAndRegisterStyleElement<CellFormat, CellFormats>(cfNew, ss.CellFormats,
-                fnCombine, fnCompare, baseCellXfsIdx, doSave);
+                formatCombine, formatCompare, baseCellXfsIdx, doSave);
             if (ss.CellFormats.Count != (uint)ss.CellFormats.Count())
             {
                 ss.CellFormats.Count = (uint)ss.CellFormats.Count();
@@ -330,7 +418,7 @@ namespace OpenExcel.OfficeOpenXml.Internal
         }
 
         private uint MergeAndRegisterStyleElement<TElement, TParent>(TElement elemNew, TParent parent,
-                                                 Action<TElement, TElement> fnCombine,
+                                                 Func<TElement, TElement, TElement> fnCombine,
                                                  Func<TElement, TElement, bool> fnCompare,
                                                  UInt32Value baseElementIdx, bool doSave)
             where TElement : OpenXmlElement
@@ -342,7 +430,7 @@ namespace OpenExcel.OfficeOpenXml.Internal
             if (baseElementIdx != null)
             {
                 elemCombined = (TElement)parent.Elements<TElement>().ElementAt((int)baseElementIdx.Value).Clone();
-                fnCombine(elemNew, elemCombined);
+                elemCombined = fnCombine(elemNew, elemCombined);
             }
             else
             {
@@ -371,10 +459,7 @@ namespace OpenExcel.OfficeOpenXml.Internal
 
         private bool GenericElementCompare(OpenXmlElement e1, OpenXmlElement e2)
         {
-            bool match = true;
-            if (e1.InnerXml != e2.InnerXml)
-                match = false;
-            return match;
+            return e1.InnerXml.Equals(e2.InnerXml);
         }
     }
 }

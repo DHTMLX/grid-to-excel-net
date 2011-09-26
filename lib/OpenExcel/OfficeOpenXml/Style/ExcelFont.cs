@@ -25,6 +25,8 @@ namespace OpenExcel.OfficeOpenXml.Style
                 FontObject = new Font();
         }
 
+
+
         public string Name
         {
             get
@@ -97,15 +99,12 @@ namespace OpenExcel.OfficeOpenXml.Style
             get
             {
 
-                return FontObject.Color.Rgb.ToString();
+                return FontObject.Color.Rgb.Value;
                 
             }
             set
             {
-                FontObject.Color = new Color()
-                {
-                    Rgb = new DocumentFormat.OpenXml.HexBinaryValue(value)
-                };
+                FontObject.Color = new Color() { Rgb = value };
                 if (_stylable != null)
                     _stylable.Style.Font = this;
             }

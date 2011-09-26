@@ -42,6 +42,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Class1.cs" />
     <Compile Include="CSVxml.cs" />
     <Compile Include="ExcelCell.cs" />
     <Compile Include="ExcelColumn.cs" />

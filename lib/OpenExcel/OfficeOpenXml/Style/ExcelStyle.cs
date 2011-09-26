@@ -67,6 +67,12 @@ namespace OpenExcel.OfficeOpenXml.Style
         public void ApplySettings(Font font, Fill fill, params ExcelBorder[] borders)
         {
 
+
+        }
+        public uint GetBorderId()
+        {
+            CellFormat cf = _styles.GetCellFormat(this.StyleIndex ?? 0);
+            return cf.BorderId ?? 0;
         }
         public ExcelBorder Border
         {

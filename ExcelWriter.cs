@@ -8,6 +8,8 @@ using System.Web;
 
 using OpenExcel.OfficeOpenXml.Style;
 using OpenExcel.OfficeOpenXml;
+//using DocumentFormat.OpenXml.Spreadsheet;
+///TODO: add text color, vertical alignment, horizontal alignment, colspan, rowspan
 namespace grid_excel_net
 {
     public class ExcelWriter
@@ -32,7 +34,7 @@ namespace grid_excel_net
 
 	    private int cols_stat;
 	    private int rows_stat;
-	  //  RGBColor colors;
+
 	    private String watermark = null;
 	
 	    public void generate(String xml, HttpResponse resp){
@@ -48,13 +50,14 @@ namespace grid_excel_net
             createExcel(output);
             setColorProfile();
             headerPrint(parser);
-            wb.Workbook.Document.Styles.Save();
+          
             rowsPrint(parser, output);
+            wb.Workbook.Document.Styles.Save();
             footerPrint(parser);
             insertHeader(parser, output);
             insertFooter(parser, output);
             watermarkPrint(parser);
-          //  wb.Workbook.Document.Styles.Save();
+         
             wb.Dispose();
             //   } catch (Exception e) {
             //	    e.printStackTrace();
@@ -73,11 +76,11 @@ namespace grid_excel_net
             
 		    sheet = wb.Workbook.Worksheets.Add("First Sheet");
             wb.EnsureStylesDefined();
-		  //  colors = new RGBColor();
+
 	    }
 
 	    private void outputExcel(HttpResponse resp){
-		    resp.ContentType = "application/vnd.ms-excel";
+            resp.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 		    resp.HeaderEncoding = Encoding.UTF8;
 		    resp.AppendHeader("Content-Disposition", "attachment;filename=grid.xls");
 		    resp.AppendHeader("Cache-Control", "max-age=0");
@@ -90,7 +93,9 @@ namespace grid_excel_net
 		
 		    int[] widths = parser.getWidths();
 		    this.cols_stat = widths.Length;
-		
+
+             
+
 		    int sumWidth = 0;
 		    for (int i = 0; i < widths.Length; i++) {
 			    sumWidth += widths[i];
@@ -99,27 +104,33 @@ namespace grid_excel_net
 		    if (parser.getWithoutHeader() == false) {
                 ExcelFont font = wb.CreateFont("Arial", 9);
                 font.Bold = true;
-                
+                if (headerTextColor != "FF000000")
+                    font.Color = headerTextColor;
+
+                ExcelBorder border = getBorder();  
+
 
 			    for (uint row = 1; row <= cols.Length; row++) {
-                  
+                    
                     sheet.Rows[row].Height = 22.5;
 				    for (uint col = 1; col <= cols[row-1].Length; col++) {
-                  
+
+                        
+                        sheet.Cells[row, col].Style.Font = font;//if bold font assigned after border - all table will be bold, weird, find out later
+                        
+                        sheet.Cells[row, col].Style.Border = border;
+
                         sheet.Columns[col].Width = widths[col-1] / scale;
 					    String name = cols[row-1][col-1].GetName();
-                       
+                        if (bgColor != "FFFFFFFF")
+                            sheet.Cells[row, col].Style.Fill.ForegroundColor = bgColor;
+                        
 
-                        sheet.Cells[row, col].Style.Font = font;
+                        
 
                         ///TODO: 
-                        ///border color, font color, merge cells, alignment
-                        sheet.Cells[row, col].Style.Border.BottomStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                        sheet.Cells[row, col].Style.Border.LeftStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                        sheet.Cells[row, col].Style.Border.RightStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                        sheet.Cells[row, col].Style.Border.TopStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
+                        ///font color, merge cells, alignment
                         sheet.Cells[row, col].Value = name;
-                        sheet.Cells[row, col].Style.Fill.ForegroundColor = bgColor;
 					    colsNumber = (int)col;
 				    }
 			    }
@@ -139,28 +150,41 @@ namespace grid_excel_net
 		    }
 	    }
 
+
+        protected ExcelBorder getBorder()
+        {
+            ExcelBorder border = new ExcelBorder(null, wb.Styles, 0);           
+            border.BottomStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
+            border.BottomColor = lineColor;
+            border.LeftStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
+            border.LeftColor = lineColor;
+            border.RightStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
+            border.RightColor = lineColor;
+            border.TopStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
+            border.TopColor = lineColor;
+            return border;
+        }
+
 	    private void footerPrint(ExcelXmlParser parser){
 		    cols = parser.getColumnsInfo("foot");
-
+            ExcelBorder border = getBorder();  
 		    if (parser.getWithoutHeader() == false) {
                 ExcelFont font = wb.CreateFont("Arial", 10);
                 font.Bold = true;
+                if (headerTextColor != "FF000000")
+                    font.Color = headerTextColor;
 			    for (uint row = 1; row <= cols.Length; row++) {
-                    sheet.Rows[row].Height = 22.5;
+                    
                     uint rowInd = (uint)(row + headerOffset);
+                    sheet.Rows[rowInd].Height = 22.5;
                  
 				    for (uint col = 1; col <= cols[row-1].Length; col++) {
 					
-                        sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = bgColor;
+                        if (bgColor != "FFFFFFFF")
+                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = bgColor;
                         sheet.Cells[rowInd, col].Style.Font = font;
-
-                        //TODO add text color, vertical alignment, border line color, horizontal alignment
-
-                        sheet.Cells[rowInd, col].Style.Border.BottomStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                        sheet.Cells[rowInd, col].Style.Border.LeftStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                        sheet.Cells[rowInd, col].Style.Border.RightStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                        sheet.Cells[rowInd, col].Style.Border.TopStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-
+                        //TODO add text color, vertical alignment, horizontal alignment
+                        sheet.Cells[rowInd, col].Style.Border = border;
                         sheet.Cells[rowInd, col].Value = cols[row - 1][col - 1].GetName();
 				    }
 			    }
@@ -182,87 +206,79 @@ namespace grid_excel_net
 
 	    private void watermarkPrint(ExcelXmlParser parser){
 		    if (watermark == null) return;
-         //   ExcelFont font = wb.CreateFont("Arial", 10);
-         //   font.Bold = true;
-         //   font.Color = watermarkTextColor;
-        //    foreach(var i in 
-           // sheet.Cells[headerOffset + 1, 0
-		   /* WritableFont font = new WritableFont(WritableFont.ARIAL, 10, WritableFont.BOLD);
-		    font.setColour(colors.getColor(watermarkTextColor, wb));
-		    WritableCellFormat f = new WritableCellFormat (font);
-		    f.setBorder(Border.ALL, BorderLineStyle.THIN, colors.getColor(lineColor, wb));
-		    f.setVerticalAlignment(VerticalAlignment.CENTRE);
+            ExcelFont font = wb.CreateFont("Arial", 10);
+            font.Bold = true;
+            font.Color = watermarkTextColor;
+            
+		    ExcelBorder border = getBorder();
 
-		    f.setAlignment(Alignment.CENTRE);
-		    Label label = new Label(0, headerOffset, watermark , f);
-		    sheet.addCell(label);
-		    sheet.mergeCells(0, headerOffset, colsNumber, headerOffset);*/
+		   // f.setAlignment(Alignment.CENTRE);
+            sheet.Cells[(uint)(headerOffset + 1), 0].Value = watermark;
+		  //  Label label = new Label(0, headerOffset, watermark , f);
+		  //  sheet.addCell(label);
+		   // sheet.mergeCells(0, headerOffset, colsNumber, headerOffset);*/
 	    }
 
 	    private void rowsPrint(ExcelXmlParser parser, Stream resp) {
-		    //do we really need them?
+		    
 		    ExcelRow[] rows = parser.getGridContent();
+
 		    this.rows_stat = rows.Length;
-
-          //  ExcelFont font = wb.CreateFont("Arial", 9);
-          //  font.Bold = true;
-
+           
+            ExcelBorder border = getBorder();  
+     
 		    for (uint row = 1; row <= rows.Length; row++) {
 			    ExcelCell[] cells = rows[row-1].getCells();
                 uint rowInd = (uint)(row + headerOffset);
                 sheet.Rows[rowInd].Height = 20;
-			  //  sheet.Rows[(uint)col].Height = (col + headerOffset + 400);
+	 
 			    for (uint col = 1; col <= cells.Length; col++) {
-				    // sets cell font
-
-
-                  //  sheet.Cells[rowInd, row].Style.Border.BottomStyle.
-                    if (row == rows.Length - 1)
-                    {
-                        sheet.Cells[rowInd, col].Style.Border.BottomStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;                  
-                    }
-                    if (col == cols.Length - 1)
-                    {
-                        sheet.Cells[rowInd, col].Style.Border.LeftStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                    }
-
-                    sheet.Cells[rowInd, col].Style.Border.RightStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                    sheet.Cells[rowInd, col].Style.Border.TopStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-                    sheet.Cells[rowInd, col].Value = cells[col - 1].GetValue();
-              
 
                     ExcelFont font = wb.CreateFont("Arial", 10);
-                    font.Bold = cells[col - 1].GetBold();
-                    font.Italic = cells[col - 1].GetItalic();
-                   // if ((!cells[col - 1].GetTextColor().Equals("")) && (parser.getProfile().Equals("full_color")))
-                  //      font.Color = "FF" + cells[row].GetTextColor();
-                  //  else
-                   //     font.Color = "FFFF00FF";
-
-                    sheet.Cells[rowInd, col].Style.Font = font;
-
-
-				  /*  WritableFont font = new WritableFont(WritableFont.ARIAL, 10, (cells[row].getBold()) ? WritableFont.BOLD : WritableFont.NO_BOLD, (cells[row].getItalic()) ? true : false);
-				    if ((!cells[row].getTextColor().equals(""))&&(parser.getProfile().equals("full_color")))
-					    font.setColour(colors.getColor(cells[row].getTextColor(), wb));
-				    else
-					    font.setColour(colors.getColor(gridTextColor, wb));
-				    WritableCellFormat f = new WritableCellFormat (font);
-                    */
-				    // sets cell background color
+                    if(cells[col - 1].GetBold())
+                        font.Bold = true;
                     
-				    if ((!cells[col - 1].GetBgColor().Equals(""))&&(parser.getProfile().Equals("full_color"))) {
+                    if(cells[col - 1].GetItalic())
+                        font.Italic = true;
+               //     if (gridTextColor != "FF000000")
+               //         font.Color = gridTextColor;
+                    sheet.Cells[rowInd, col].Style.Font = font;
+                    sheet.Cells[rowInd, col].Style.Border = border;
+
+
+                    if ((!cells[col - 1].GetBgColor().Equals(""))&&(parser.getProfile().Equals("full_color"))) {
                         sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = "FF" + cells[col - 1].GetBgColor();
 				    } else {
 					    //Colour bg;
-                        if (row % 2 == 0)
+                        if (row % 2 == 0 && scaleTwoColor != "FFFFFFFF")
                         {
-                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = scaleTwoColor;
-						
+                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = scaleTwoColor;						
 					    } else {
-                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = scaleOneColor;
+                            if (scaleOneColor != "FFFFFFFF")
+                                sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = scaleOneColor;
 					    }
 				    }
+
+                    
+                    int intVal;
+                    double dbVal;
+
+                    if (int.TryParse(cells[col - 1].GetValue(), out intVal))
+                    {
+                        sheet.Cells[rowInd, col].Value = intVal;
+                    }
+                    else if (double.TryParse(cells[col - 1].GetValue(), out dbVal))
+                    {
+                        sheet.Cells[rowInd, col].Value = dbVal;
+                    }
+                    else
+                    {
+                        sheet.Cells[rowInd, col].Value = cells[col - 1].GetValue();
+                    }
+                        
+                    
+                    //COLOR!
+				   
                     /*
 				    
 
@@ -277,16 +293,8 @@ namespace grid_excel_net
 					    } else {
 						    f.setAlignment(Alignment.CENTRE);
 					    }
-				    }
-				    try {
-					    double name = Double.parseDouble(cells[row].getValue());
-					    Number label = new Number(row, col + headerOffset, name, f);
-					    sheet.addCell(label);
-				    } catch (Exception e) {
-					    String name = cells[row].getValue();
-					    Label label = new Label(row, col + headerOffset, name, f);
-					    sheet.addCell(label);
 				    }*/
+				   
 			    }
 		    }
 		    headerOffset += rows.Length;

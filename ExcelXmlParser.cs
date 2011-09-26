@@ -13,7 +13,7 @@ namespace grid_excel_net
 	    private Boolean footer = false;
 	    private Boolean without_header = false;
 	    private string profile = "gray";
-
+      
 	    public void setXML(string xml)
 	    {
           
@@ -83,10 +83,7 @@ namespace grid_excel_net
                         columns[i] = colLine;
                     }
                 }
-                else
-                {
-                    return new ExcelColumn[0][];
-                }
+                
 		    } catch (Exception e) {
 			    // TODO Auto-generated catch block
 			  //  e.PrintStackTrace();
