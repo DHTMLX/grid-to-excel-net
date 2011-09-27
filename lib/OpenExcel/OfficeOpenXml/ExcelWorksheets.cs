@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
@@ -9,7 +10,7 @@ namespace OpenExcel.OfficeOpenXml
     public class ExcelWorksheets : IEnumerable<ExcelWorksheet>
     {
         public ExcelDocument Document { get; protected set; }
-
+        protected Worksheet worksheet;
         private Dictionary<string, ExcelWorksheet> _sheets = new Dictionary<string, ExcelWorksheet>();
 
         internal ExcelWorksheets(ExcelDocument parent)
@@ -32,11 +33,12 @@ namespace OpenExcel.OfficeOpenXml
                 Name = sheetName
             });
             wpart.Worksheet = new Worksheet();
+            worksheet = wpart.Worksheet;
             wpart.Worksheet.Append(new SheetData());
             wpart.Worksheet.Save();
             return this[sheetName];
         }
-
+        
         public void MoveAfter(string sheetName, string referenceSheetName)
         {
             WorkbookPart wbpart = this.Document.GetOSpreadsheet().WorkbookPart;

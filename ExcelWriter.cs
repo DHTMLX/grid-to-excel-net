@@ -37,12 +37,7 @@ namespace grid_excel_net
 
 	    private String watermark = null;
 	
-	    public void generate(String xml, HttpResponse resp){
-            generate(xml, resp.OutputStream);
-            outputExcel(resp);
-	    }
-
-
+	
         public void generate(string xml, Stream output){
             parser = new ExcelXmlParser();
             //    try {
@@ -79,13 +74,24 @@ namespace grid_excel_net
 
 	    }
 
-	    private void outputExcel(HttpResponse resp){
+        public void generate(HttpContext context)
+        {
+            generate(context.Server.UrlDecode(context.Request.Form["grid_xml"]), context.Response);
+        }
+
+        public void generate(string xml, HttpResponse resp)
+        {
+            var data = new MemoryStream();
+            
             resp.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 		    resp.HeaderEncoding = Encoding.UTF8;
 		    resp.AppendHeader("Content-Disposition", "attachment;filename=grid.xls");
 		    resp.AppendHeader("Cache-Control", "max-age=0");
-		  //  wb.write();
-		   // wb.close();
+            generate(xml, data);
+            data.Close();
+            data.WriteTo(resp.OutputStream);
+            
+            
 	    }
 
 	    private void headerPrint(ExcelXmlParser parser){
@@ -135,6 +141,9 @@ namespace grid_excel_net
 				    }
 			    }
 			    headerOffset = cols.Length;
+                sheet.MergeTwoCells("A1", "B1");
+
+
 			  /*  for (int col = 0; col < cols.Length; col++) {
 				    for (int row = 0; row < cols[col].Length; row++) {
 					    int cspan = cols[col][row].GetColspan();
@@ -170,6 +179,7 @@ namespace grid_excel_net
             ExcelBorder border = getBorder();  
 		    if (parser.getWithoutHeader() == false) {
                 ExcelFont font = wb.CreateFont("Arial", 10);
+                
                 font.Bold = true;
                 if (headerTextColor != "FF000000")
                     font.Color = headerTextColor;
@@ -225,8 +235,11 @@ namespace grid_excel_net
 
 		    this.rows_stat = rows.Length;
            
-            ExcelBorder border = getBorder();  
-     
+            ExcelBorder border = getBorder();
+            ExcelFont font = wb.CreateFont("Arial", 10);
+           // if (gridTextColor != "FF000000")
+           //      font.Color = gridTextColor;
+
 		    for (uint row = 1; row <= rows.Length; row++) {
 			    ExcelCell[] cells = rows[row-1].getCells();
                 uint rowInd = (uint)(row + headerOffset);
@@ -234,17 +247,29 @@ namespace grid_excel_net
 	 
 			    for (uint col = 1; col <= cells.Length; col++) {
 
-                    ExcelFont font = wb.CreateFont("Arial", 10);
-                    if(cells[col - 1].GetBold())
-                        font.Bold = true;
-                    
-                    if(cells[col - 1].GetItalic())
-                        font.Italic = true;
-               //     if (gridTextColor != "FF000000")
-               //         font.Color = gridTextColor;
-                    sheet.Cells[rowInd, col].Style.Font = font;
-                    sheet.Cells[rowInd, col].Style.Border = border;
 
+
+
+                    if (cells[col - 1].GetBold() || cells[col - 1].GetItalic())
+                    {
+                        ExcelFont curFont = wb.CreateFont("Arial", 10); ;
+                       // if (gridTextColor != "FF000000")
+                     //       font.Color = gridTextColor;
+                        if (cells[col - 1].GetBold())
+                            font.Bold = true;
+
+                        if (cells[col - 1].GetItalic())
+                            font.Italic = true;
+
+                        sheet.Cells[rowInd, col].Style.Font = curFont;
+                    }
+                    else
+                    {
+                        sheet.Cells[rowInd, col].Style.Font = font;
+                    }
+
+                    sheet.Cells[rowInd, col].Style.Border = border;
+   
 
                     if ((!cells[col - 1].GetBgColor().Equals(""))&&(parser.getProfile().Equals("full_color"))) {
                         sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = "FF" + cells[col - 1].GetBgColor();

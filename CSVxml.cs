@@ -16,21 +16,11 @@ namespace grid_excel_net
         private int rowsPos;
         private void parseXmlString(String xml_string)
         {
-            //get the factory
-           // DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-
             try
             {
-                //Using factory get an instance of document builder
-           //     DocumentBuilder db = dbf.newDocumentBuilder();
 
-                //parse using builder to get DOM representation of the XML file
-           //     StringReader reader = new StringReader(xml_string);
-           //     reader.
-              //  InputSource inputSource = new InputSource(reader);
              //   inputSource.setEncoding("UTF-8");
                 dom.LoadXml(xml_string);
-            //    reader.close();
 
                 header = dom.GetElementsByTagName("head");
                 if (header.Count > 0)

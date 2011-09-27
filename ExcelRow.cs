@@ -13,7 +13,6 @@ namespace grid_excel_net
             XmlNode text_node;
             if ((nodes != null) && (nodes.Count > 0))
             {
-                //(REV) do we really need them?
                 cells = new ExcelCell[nodes.Count];
                 for (int i = 0; i < nodes.Count; i++)
                 {

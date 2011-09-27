@@ -26,6 +26,7 @@ namespace OpenExcel.OfficeOpenXml.Style
         }
 
 
+  
 
         public string Name
         {

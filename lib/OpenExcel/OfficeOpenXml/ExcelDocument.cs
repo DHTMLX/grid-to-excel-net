@@ -109,10 +109,13 @@ namespace OpenExcel.OfficeOpenXml
             return _doc;
         }
 
+       
+        
         public DocumentStyles Styles
         {
             get
             {
+               
                 return _styles;
             }
         }
@@ -145,6 +148,9 @@ namespace OpenExcel.OfficeOpenXml
             _sharedStrings = new DocumentSharedStrings(wpart);
             this.Workbook = new ExcelWorkbook(this);
         }
+
+
+       
 
         private void Cleanup()
         {

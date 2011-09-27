@@ -36,10 +36,14 @@ namespace OpenExcel.OfficeOpenXml
             this.Rows = new ExcelRows(this);
             this.Columns = new ExcelColumns(this);
             this.Cells = new ExcelCells(this);
-
+            
             _sheetCache = new WorksheetCache(this);
             _sheetCache.Load();
         }
+
+        
+
+
 
         public void InsertRows(uint rowStart, int qty)
         {
@@ -119,6 +123,66 @@ namespace OpenExcel.OfficeOpenXml
             this.Document.RecalcCellReferences(sheetChange);
         }
 
+
+        public void MergeTwoCells(string cell1Name, string cell2Name)
+        {
+            WorkbookPart wkbkPart = this.Document.GetOSpreadsheet().WorkbookPart;
+            Worksheet worksheet = wkbkPart.Workbook.WorkbookPart.WorksheetParts.First().Worksheet;
+
+            MergeCells mergeCells;
+            if (worksheet.Elements<MergeCells>().Count() > 0)
+            {
+                mergeCells = worksheet.Elements<MergeCells>().First();
+            }
+            else
+            {
+                mergeCells = new MergeCells();
+
+                // Insert a MergeCells object into the specified position.
+                if (worksheet.Elements<CustomSheetView>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<CustomSheetView>().First());
+                }
+                else if (worksheet.Elements<DataConsolidate>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<DataConsolidate>().First());
+                }
+                else if (worksheet.Elements<SortState>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<SortState>().First());
+                }
+                else if (worksheet.Elements<AutoFilter>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<AutoFilter>().First());
+                }
+                else if (worksheet.Elements<Scenarios>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<Scenarios>().First());
+                }
+                else if (worksheet.Elements<ProtectedRanges>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<ProtectedRanges>().First());
+                }
+                else if (worksheet.Elements<SheetProtection>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<SheetProtection>().First());
+                }
+                else if (worksheet.Elements<SheetCalculationProperties>().Count() > 0)
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<SheetCalculationProperties>().First());
+                }
+                else
+                {
+                    worksheet.InsertAfter(mergeCells, worksheet.Elements<SheetData>().First());
+                }
+            }
+
+            // Create the merged cell and append it to the MergeCells collection.
+            MergeCell mergeCell = new MergeCell() { Reference = new StringValue(cell1Name + ":" + cell2Name) };
+            mergeCells.Append(mergeCell);
+            
+        }
+
         public bool Save()
         {
             if (!this.Modified && !_sheetCache.Modified)
@@ -126,6 +190,8 @@ namespace OpenExcel.OfficeOpenXml
 
             WorkbookPart wkbkPart = this.Document.GetOSpreadsheet().WorkbookPart;
             Sheet sheet = wkbkPart.Workbook.Sheets.Elements<Sheet>().Where(s => s.Name == this.Name).First();
+            
+         
 
             if (sheet != null)
             {

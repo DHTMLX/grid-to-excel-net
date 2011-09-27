@@ -46,6 +46,10 @@ namespace OpenExcel.OfficeOpenXml.Internal
             _wsheet = wsheet;
         }
 
+       
+
+
+
         public void Load()
         {
             WorksheetPart wp = _wsheet.GetOWorksheetPart();
@@ -297,6 +301,9 @@ namespace OpenExcel.OfficeOpenXml.Internal
             writer.WriteEndElement(); // worksheet
         }
 
+
+
+
         private void WriteSheetData(OpenXmlWriter writer)
         {
             writer.WriteStartElement(new SheetData());
@@ -448,6 +455,8 @@ namespace OpenExcel.OfficeOpenXml.Internal
                 return colNew;
             }
         }
+
+ 
 
         public void DeleteSingleSpanColumn(uint col)
         {

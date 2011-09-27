@@ -10,9 +10,9 @@ namespace OpenExcel.OfficeOpenXml.Internal
     public class DocumentStyles
     {
         private WorkbookPart _wpart;
-        protected Dictionary<int, CellFormat> cellFormatHash = new Dictionary<int,CellFormat>();
-
-
+        protected List<string> fontsXML = new List<string>();
+        protected List<string> formatsXML = new List<string>();
+        protected List<string> fillsXML = new List<string>();
 
         public DocumentStyles(WorkbookPart wpart)
         {
@@ -113,6 +113,8 @@ namespace OpenExcel.OfficeOpenXml.Internal
 
         protected bool compareFont(Font fNew, Font fBase)
         {
+         //   fNew.VerticalTextAlignment.Val = TextVerticalAlignmentValues.
+                
             return GenericElementCompare(fNew, fBase);
         }
 
@@ -211,6 +213,7 @@ namespace OpenExcel.OfficeOpenXml.Internal
 
         protected Fill fillCombine(Fill elemNew, Fill elemBase)
         {
+            
             // Appears that Fill object clears GradientFill when PatternFill is set and vice-versa
             if (elemNew.PatternFill != null)
             {
@@ -417,6 +420,24 @@ namespace OpenExcel.OfficeOpenXml.Internal
             return wpart.WorkbookStylesPart.Stylesheet;
         }
 
+
+
+        protected string getFormatHash(CellFormat format)
+        {
+            return string.Concat(format.NumberFormatId) + "|" +
+                string.Concat(format.FillId) + "|" +
+                string.Concat(format.BorderId) + "|" +
+                string.Concat(format.FontId) + "|" +
+                string.Concat(format.FormatId);
+        }
+        protected string getFontHash(Font fnt){
+            return fnt.InnerXml;
+        }
+        protected string getFillHash(Fill fill)
+        {
+            return fill.InnerXml;
+        }
+
         private uint MergeAndRegisterStyleElement<TElement, TParent>(TElement elemNew, TParent parent,
                                                  Func<TElement, TElement, TElement> fnCombine,
                                                  Func<TElement, TElement, bool> fnCompare,
@@ -438,17 +459,68 @@ namespace OpenExcel.OfficeOpenXml.Internal
             }
 
             int ctr = 0;
+
+            //speed up for fonts
+            bool isFont = elemCombined as Font != null;
+            bool isFormat = elemCombined as CellFormat != null;
+            bool isFill = elemCombined as Fill != null;
+            string xml = "";
+            if (isFont || isFormat || isFill)
+            {
+                if (isFont)
+                    xml = getFontHash(elemCombined as Font);
+                else if(isFormat)
+                    xml = getFormatHash(elemCombined as CellFormat);
+                else
+                    xml = getFillHash(elemCombined as Fill);
+                
+            }
+            List<string> itemsHashContainer = new List<string>();
+            if (isFont)
+                itemsHashContainer = fontsXML;
+            else if (isFormat)
+                itemsHashContainer = formatsXML;
+            else
+                itemsHashContainer = fillsXML;
+
             foreach (TElement e in parent.Elements<TElement>())
             {
-                if (fnCompare(e, elemCombined))
+                if (!isFont && !isFormat)
                 {
-                    elemIdxMatch = ctr;
-                    break;
+                    if (fnCompare(e, elemCombined))
+                    {
+                        elemIdxMatch = ctr;
+                        break;
+                    }
+                }
+                else
+                {
+
+
+                    if (itemsHashContainer.Count <= ctr)
+                    {
+                        if (isFont)
+                            itemsHashContainer.Add(getFontHash(e as Font));
+                        else if (isFormat)
+                            itemsHashContainer.Add(getFormatHash(e as CellFormat));
+                        else
+                            itemsHashContainer.Add(getFillHash(e as Fill));
+                    }
+                    if (xml.Equals(itemsHashContainer[ctr]))
+                    {
+                        elemIdxMatch = ctr;
+                        break;
+                    }
                 }
                 ctr++;
             }
             if (elemIdxMatch == -1)
             {
+                //speed up font comparing
+                if (isFont || isFormat || isFill)
+                {
+                    itemsHashContainer.Add(xml);
+                }
                 parent.Append(elemCombined);
                 if(doSave)
                     EnsureStylesheet().Save();
