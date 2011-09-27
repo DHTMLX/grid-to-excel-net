@@ -1,4 +1,4 @@
-/bin
-/obj
-/lib/openExcel/obj
-/lib/openExcel/bin
+/src/bin
+/src/obj
+/src/lib/openExcel/obj
+/src/lib/openExcel/bin

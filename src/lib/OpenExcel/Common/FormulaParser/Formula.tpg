@@ -1,0 +1,31 @@
+<% @TinyPG Namespace="OpenExcel.Common.FormulaParser" %> 
+
+PARENOPEN    -> @"\(";
+PARENCLOSE   -> @"\)";
+BRACEOPEN    -> @"\{";
+BRACECLOSE   -> @"\}";
+COMMA        -> @",";
+COLON        -> @"\:";
+SEMICOLON    -> @";";
+FUNC         -> @"@?[A-Za-z_][A-Za-z0-9_]*(?=\()";
+ERR          -> @"\#((NULL|DIV\/0|VALUE|REF|NUM)\!|NAME\?|N\/A)";
+SHEETNAME    -> @"(?x)(  '([^*?\[\]\/\\\'\\]+)'  |  ([^*?\[\]\/\\\(\)\!\+\-\&\,]+)  )\!";
+ADDRESS      -> @"(\$)?([A-Za-z]+)(\$)?[0-9]+";
+
+NULL         -> @"(?i)(NULL)";
+BOOL         -> @"(?i)(TRUE|FALSE)";
+NUMBER       -> @"(\+|-)?[0-9]+(\.[0-9]+)?";
+STRING       -> @"\""(\""\""|[^\""])*\""";
+OP           -> @"\*|/|\+|-|&|==|!=|<>|<=|>=|>|<|=";
+EOF          -> @"^$";
+
+[Skip] WSPC -> @"\s+";
+
+Start        -> ComplexExpr EOF;
+ComplexExpr  -> Expr (OP Expr)*;
+Params       -> ComplexExpr? (COMMA ComplexExpr)*;
+ArrayElems   -> ComplexExpr? ((COMMA|SEMICOLON) ComplexExpr)*;
+FuncCall     -> FUNC PARENOPEN Params? PARENCLOSE;
+Array        -> BRACEOPEN ArrayElems BRACECLOSE;
+Range        -> SHEETNAME ? (ADDRESS|ERR) (COLON (ADDRESS|ERR))?;
+Expr         -> NULL | BOOL | NUMBER | STRING | PARENOPEN Expr PARENCLOSE | Array | Range | FuncCall;
