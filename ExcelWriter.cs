@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.IO;
 
 using System.Web;
+
 
 using OpenExcel.OfficeOpenXml.Style;
 using OpenExcel.OfficeOpenXml;
@@ -38,7 +40,7 @@ namespace grid_excel_net
 	    private String watermark = null;
 	
 	
-        public void generate(string xml, Stream output){
+        public void Generate(string xml, Stream output){
             parser = new ExcelXmlParser();
             //    try {
             parser.setXML(xml);
@@ -74,25 +76,54 @@ namespace grid_excel_net
 
 	    }
 
-        public void generate(HttpContext context)
+        public void Generate(HttpContext context)
         {
-            generate(context.Server.UrlDecode(context.Request.Form["grid_xml"]), context.Response);
+            Generate(HttpUtility.UrlDecode(context.Request.Form["grid_xml"]), context.Response);
         }
 
-        public void generate(string xml, HttpResponse resp)
+        public MemoryStream Generate(NameValueCollection form)
+        {
+            
+            var data = new MemoryStream();
+            Generate(HttpUtility.UrlDecode(form["grid_xml"]), data);
+            return data;
+        }
+        public string ContentType
+        {
+            get
+            {
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            }
+        }
+        public void Generate(string xml, HttpResponse resp)
         {
             var data = new MemoryStream();
-            
-            resp.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+            resp.ContentType = ContentType;
 		    resp.HeaderEncoding = Encoding.UTF8;
-		    resp.AppendHeader("Content-Disposition", "attachment;filename=grid.xls");
+            resp.AppendHeader("Content-Disposition", "attachment;filename=grid.xlsx");
 		    resp.AppendHeader("Cache-Control", "max-age=0");
-            generate(xml, data);
-            data.Close();
+            Generate(xml, data);
+
             data.WriteTo(resp.OutputStream);
             
             
 	    }
+        public void Generate(string xml, HttpResponseBase resp)
+        {
+            var data = new MemoryStream();
+
+            resp.ContentType = ContentType;
+            resp.HeaderEncoding = Encoding.UTF8;
+            resp.AppendHeader("Content-Disposition", "attachment;filename=grid.xlsx");
+            resp.AppendHeader("Cache-Control", "max-age=0");
+            Generate(xml, data);
+
+            data.WriteTo(resp.OutputStream);
+
+
+        }
+
 
 	    private void headerPrint(ExcelXmlParser parser){
 		    cols = parser.getColumnsInfo("head");
@@ -141,7 +172,7 @@ namespace grid_excel_net
 				    }
 			    }
 			    headerOffset = cols.Length;
-                sheet.MergeTwoCells("A1", "B1");
+               
 
 
 			  /*  for (int col = 0; col < cols.Length; col++) {
