@@ -75,11 +75,19 @@ namespace grid_excel_net
             Generate(HttpUtility.UrlDecode(context.Request.Form["grid_xml"]), context.Response);
         }
 
+
+        public MemoryStream Generate(string xml)
+        {
+            var data = new MemoryStream();
+
+            Generate(xml, data);
+            return data;
+        }
         public MemoryStream Generate(NameValueCollection form)
         {
-            
+            var xml = HttpUtility.UrlDecode(form["grid_xml"]);
             var data = new MemoryStream();
-            Generate(HttpUtility.UrlDecode(form["grid_xml"]), data);
+            Generate(xml, data);
             return data;
         }
         public string ContentType
