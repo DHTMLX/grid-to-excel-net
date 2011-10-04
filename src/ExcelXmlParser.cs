@@ -18,14 +18,12 @@ namespace grid_excel_net
 	    {
           
             XmlDocument dom = new XmlDocument(); ;
-		    //try {
+		    try {
             ///TODO: handle exceptions, log maybe
             dom.LoadXml(xml);
-		   // }catch(SAXException se) {
-			//    se.printStackTrace();
-		  //  }catch(IOException ioe) {
-			//    ioe.printStackTrace();
-		   // }
+		    }catch(Exception se) {
+
+		    }
 		    root = dom.DocumentElement;
 
 		    String header_text = root.GetAttribute("header");
@@ -49,18 +47,11 @@ namespace grid_excel_net
 	    public ExcelColumn[][] getColumnsInfo(String mode) {
 		    ExcelColumn[] colLine = null;
 
-		 //   XPathFactory xpathFactory = XPathFactory.newInstance();
-            //XPathItem xpath = new XPathItem();
-          //  XPathExpression xpath = new XPathExpression
-
-
 		    try {
 			    String path = "/rows/" + mode + "/columns";
 
                 var n1 = root.SelectNodes(path);
-			   // NodeList n1 = (NodeList) xpath.evaluate(path, root,
-			  //      XPathConstants.NODESET);
-
+			   
                 if ((n1 != null) && (n1.Count > 0))
                 {
 
@@ -85,8 +76,7 @@ namespace grid_excel_net
                 }
                 
 		    } catch (Exception e) {
-			    // TODO Auto-generated catch block
-			  //  e.PrintStackTrace();
+
 		    }
 		
 		    createWidthsArray();

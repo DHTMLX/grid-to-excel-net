@@ -42,33 +42,27 @@ namespace grid_excel_net
 	
         public void Generate(string xml, Stream output){
             parser = new ExcelXmlParser();
-            //    try {
-            parser.setXML(xml);
-            createExcel(output);
-            setColorProfile();
-            headerPrint(parser);
+            try {
+                parser.setXML(xml);
+                createExcel(output);
+                setColorProfile();
+                headerPrint(parser);
           
-            rowsPrint(parser, output);
-            wb.Workbook.Document.Styles.Save();
-            footerPrint(parser);
-            insertHeader(parser, output);
-            insertFooter(parser, output);
-            watermarkPrint(parser);
+                rowsPrint(parser, output);
+                wb.Workbook.Document.Styles.Save();
+                footerPrint(parser);
+                insertHeader(parser, output);
+                insertFooter(parser, output);
+                watermarkPrint(parser);
          
             wb.Dispose();
-            //   } catch (Exception e) {
+            } catch (Exception e) {
             //	    e.printStackTrace();
-            //   }
+            }
         }
 
 	    private void createExcel(Stream resp){
-		    /* Save generated excel to file.
-		     * Can be useful for debug output.
-		     * */
-		    /*
-		    FileOutputStream fos = new FileOutputStream("d:/test.xls");
-		    wb = Workbook.createWorkbook(fos);
-		    */
+
 		    wb = ExcelDocument.CreateWorkbook(resp);
             
 		    sheet = wb.Workbook.Worksheets.Add("First Sheet");
