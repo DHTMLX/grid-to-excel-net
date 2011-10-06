@@ -13,7 +13,7 @@ namespace Grid2Excel.Controllers
     [HandleError]
     public class GeneratorController : Controller
     {
-        
+        [HttpPost, ValidateInput(false)]
         public ActionResult Generate()
         {
             var generator = new ExcelWriter();
