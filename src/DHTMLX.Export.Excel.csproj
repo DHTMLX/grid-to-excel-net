@@ -8,8 +8,8 @@
     <ProjectGuid>{98502C30-7BF1-4CE6-9F69-F1F5EF9224FE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>grid_excel_net</RootNamespace>
-    <AssemblyName>grid-excel-net</AssemblyName>
+    <RootNamespace>DHTMLX.Export.Excel</RootNamespace>
+    <AssemblyName>DHTMLX.Export.Excel</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

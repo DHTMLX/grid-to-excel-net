@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Xml;
 using System.Xml.XPath;
-namespace grid_excel_net
+namespace DHTMLX.Export.Excel
 {
     public class ExcelXmlParser
     {

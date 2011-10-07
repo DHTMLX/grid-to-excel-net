@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using grid_excel_net;
+using DHTMLX.Export.Excel;
 namespace Generator
 {
 

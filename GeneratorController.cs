@@ -6,7 +6,7 @@ using System.Web.Mvc;
 using System.IO;
 
 
-using grid_excel_net;
+using DHTMLX.Export.Excel;
 
 namespace Grid2Excel.Controllers
 {

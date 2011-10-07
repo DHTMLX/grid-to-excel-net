@@ -3,7 +3,7 @@ using System.Text;
 using System.Linq;
 using System.Xml;
 
-namespace grid_excel_net
+namespace DHTMLX.Export.Excel
 {
     public class CSVxml
     {

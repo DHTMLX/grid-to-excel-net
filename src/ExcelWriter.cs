@@ -12,7 +12,7 @@ using OpenExcel.OfficeOpenXml.Style;
 using OpenExcel.OfficeOpenXml;
 //using DocumentFormat.OpenXml.Spreadsheet;
 ///TODO: add text color, vertical alignment, horizontal alignment, colspan, rowspan
-namespace grid_excel_net
+namespace DHTMLX.Export.Excel
 {
     public class ExcelWriter
     {

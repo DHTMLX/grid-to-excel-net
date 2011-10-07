@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Xml;
 
-namespace grid_excel_net
+namespace DHTMLX.Export.Excel
 {
     public class ExcelRow
     {

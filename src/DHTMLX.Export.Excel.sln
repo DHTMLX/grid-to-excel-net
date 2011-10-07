@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "grid-excel-net", "grid-excel-net.csproj", "{98502C30-7BF1-4CE6-9F69-F1F5EF9224FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DHTMLX.Export.Excel", "DHTMLX.Export.Excel.csproj", "{98502C30-7BF1-4CE6-9F69-F1F5EF9224FE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenExcel", "lib\OpenExcel\OpenExcel.csproj", "{A84E1491-4EF5-47FC-BBDB-8AD0F59100F7}"
 EndProject
