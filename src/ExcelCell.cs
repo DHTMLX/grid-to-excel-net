@@ -16,8 +16,8 @@ namespace DHTMLX.Export.Excel
             if(parent.HasChildNodes)
                 value = parent.FirstChild.Value;
             XmlElement el = (XmlElement)parent;
-            bgColor = (el.HasAttribute("bgColor")) ? el.Attributes["bgColor"].Value : "";
-            textColor = (el.HasAttribute("textColor")) ? el.Attributes["textColor"].Value : "";
+            bgColor = (el.HasAttribute("bgColor")) ? RGBColor.ProcessColorForm(el.Attributes["bgColor"].Value) : "";
+            textColor = (el.HasAttribute("textColor")) ? RGBColor.ProcessColorForm(el.Attributes["textColor"].Value) : "";
             bold = (el.HasAttribute("bold")) ? el.Attributes["bold"].Value.Equals("bold") : false;
             italic = (el.HasAttribute("italic")) ? el.Attributes["italic"].Equals("italic") : false;
             align = (el.HasAttribute("align")) ? el.Attributes["align"].Value : "";

@@ -174,21 +174,6 @@ namespace DHTMLX.Export.Excel
 				    }
 			    }
 			    headerOffset = cols.Length;
-               
-
-
-			  /*  for (int col = 0; col < cols.Length; col++) {
-				    for (int row = 0; row < cols[col].Length; row++) {
-					    int cspan = cols[col][row].GetColspan();
-					    if (cspan > 0) {
-						    sheet.mergeCells(row, col, row + cspan - 1, col);
-					    }
-					    int rspan = cols[col][row].GetRowspan();
-					    if (rspan > 0) {
-						    sheet.mergeCells(row, col, row, col + rspan - 1);
-					    }
-				    }
-			    }*/
 		    }
 	    }
 
@@ -231,18 +216,6 @@ namespace DHTMLX.Export.Excel
                         sheet.Cells[rowInd, col].Value = cols[row - 1][col - 1].GetName();
 				    }
 			    }
-			  /*  for (int col = 0; col < cols.Length; col++) {
-				    for (int row = 0; row < cols[col].Length; row++) {
-					    int cspan = cols[col][row].GetColspan();
-					    if (cspan > 0) {
-						    sheet.mergeCells(row, headerOffset + col, row + cspan - 1, headerOffset + col);
-					    }
-					    int rspan = cols[col][row].GetRowspan();
-					    if (rspan > 0) {
-						    sheet.mergeCells(row, headerOffset + col, row, headerOffset + col + rspan - 1);
-					    }
-				    }
-			    }*/
 		    }
 		    headerOffset += cols.Length;
 	    }
@@ -257,9 +230,6 @@ namespace DHTMLX.Export.Excel
 
 		   // f.setAlignment(Alignment.CENTRE);
             sheet.Cells[(uint)(headerOffset + 1), 0].Value = watermark;
-		  //  Label label = new Label(0, headerOffset, watermark , f);
-		  //  sheet.addCell(label);
-		   // sheet.mergeCells(0, headerOffset, colsNumber, headerOffset);*/
 	    }
 
 	    private void rowsPrint(ExcelXmlParser parser, Stream resp) {
@@ -270,8 +240,6 @@ namespace DHTMLX.Export.Excel
            
             ExcelBorder border = getBorder();
             ExcelFont font = wb.CreateFont("Arial", 10);
-           // if (gridTextColor != "FF000000")
-           //      font.Color = gridTextColor;
 
 		    for (uint row = 1; row <= rows.Length; row++) {
 			    ExcelCell[] cells = rows[row-1].getCells();
@@ -279,10 +247,6 @@ namespace DHTMLX.Export.Excel
                 sheet.Rows[rowInd].Height = 20;
 	 
 			    for (uint col = 1; col <= cells.Length; col++) {
-
-
-
-
                     if (cells[col - 1].GetBold() || cells[col - 1].GetItalic())
                     {
                         ExcelFont curFont = wb.CreateFont("Arial", 10); ;
@@ -304,9 +268,12 @@ namespace DHTMLX.Export.Excel
                     sheet.Cells[rowInd, col].Style.Border = border;
    
 
-                    if ((!cells[col - 1].GetBgColor().Equals(""))&&(parser.getProfile().Equals("full_color"))) {
+                    if ((!cells[col - 1].GetBgColor().Equals(""))&&(parser.getProfile().Equals("full_color"))) 
+                    {
                         sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = "FF" + cells[col - 1].GetBgColor();
-				    } else {
+				    } 
+                    else 
+                    {
 					    //Colour bg;
                         if (row % 2 == 0 && scaleTwoColor != "FFFFFFFF")
                         {
