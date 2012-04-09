@@ -21,25 +21,54 @@ namespace DHTMLX.Export.Excel
 	    private ExcelColumn[][] cols;
 	    private int colsNumber = 0;
 	    private ExcelXmlParser parser;
-	
+        
 	    public int headerOffset = 0;
 	    public int scale = 6;
 	    public String pathToImgs = "";//optional, physical path
 
-	    String bgColor = "";
-	    String lineColor = "";
-	    String headerTextColor = "";
-	    String scaleOneColor = "";
-	    String scaleTwoColor = "";
-	    String gridTextColor = "";
-	    String watermarkTextColor = "";
+        public double RowHeight { get; set; }
+        public double HeaderFontSize { get; set; }
+        public double FooterFontSize { get; set; }
+        public string FontFamily { get; set; }
+        public double GridFontSize { get; set; }
+        public double WatermarkFontSize { get; set; }
+
+        public Dictionary<int, int> Widths { get; set; }
+
+        public string BGColor { get; set; }
+        public string LineColor { get; set; }
+        
+        public string ScaleOneColor { get; set; }
+        public string ScaleTwoColor { get; set; }
+
+        protected string GridTextColor { get; set; }
+        protected string WatermarkTextColor { get; set; }
+        protected string HeaderTextColor { get; set; }
 
 	    private int cols_stat;
 	    private int rows_stat;
-
+        public bool PrintFooter { get; set; }
 	    private String watermark = null;
-	
-	
+
+
+        public ExcelWriter()
+        {
+            PrintFooter = false;
+            RowHeight = 22.5;
+            FontFamily = "Arial";
+            HeaderFontSize = FooterFontSize = 9;
+
+            GridFontSize = WatermarkFontSize =10;
+
+            BGColor = "";
+            LineColor = "";
+            HeaderTextColor = "";
+            ScaleOneColor = "";
+            ScaleTwoColor = "";
+            GridTextColor = "";
+            WatermarkTextColor = "";
+        }
+
         public void Generate(string xml, Stream output){
             parser = new ExcelXmlParser();
             try {
@@ -50,7 +79,8 @@ namespace DHTMLX.Export.Excel
           
                 rowsPrint(parser, output);
                 wb.Workbook.Document.Styles.Save();
-                footerPrint(parser);
+                if(PrintFooter)
+                    footerPrint(parser);
                 insertHeader(parser, output);
                 insertFooter(parser, output);
                 watermarkPrint(parser);
@@ -129,8 +159,18 @@ namespace DHTMLX.Export.Excel
 
 	    private void headerPrint(ExcelXmlParser parser){
 		    cols = parser.getColumnsInfo("head");
-		
+		//Widths
 		    int[] widths = parser.getWidths();
+            if (this.Widths != null)
+            {
+                foreach (var index in this.Widths.Keys)
+                {
+                    if (index >= 0 && index < widths.Length)
+                    {
+                        widths[index] = Widths[index];
+                    }
+                }
+            }
 		    this.cols_stat = widths.Length;
 
              
@@ -141,17 +181,17 @@ namespace DHTMLX.Export.Excel
 		    }
            
 		    if (parser.getWithoutHeader() == false) {
-                ExcelFont font = wb.CreateFont("Arial", 9);
+                ExcelFont font = wb.CreateFont(FontFamily, HeaderFontSize);
                 font.Bold = true;
-                if (headerTextColor != "FF000000")
-                    font.Color = headerTextColor;
+                if (HeaderTextColor != "FF000000")
+                    font.Color = HeaderTextColor;
 
                 ExcelBorder border = getBorder();  
 
 
 			    for (uint row = 1; row <= cols.Length; row++) {
-                    
-                    sheet.Rows[row].Height = 22.5;
+
+                    sheet.Rows[row].Height = RowHeight;
 				    for (uint col = 1; col <= cols[row-1].Length; col++) {
 
                         
@@ -161,8 +201,8 @@ namespace DHTMLX.Export.Excel
 
                         sheet.Columns[col].Width = widths[col-1] / scale;
 					    String name = cols[row-1][col-1].GetName();
-                        if (bgColor != "FFFFFFFF")
-                            sheet.Cells[row, col].Style.Fill.ForegroundColor = bgColor;
+                        if (BGColor != "FFFFFFFF")
+                            sheet.Cells[row, col].Style.Fill.ForegroundColor = BGColor;
                         
 
                         
@@ -182,13 +222,13 @@ namespace DHTMLX.Export.Excel
         {
             ExcelBorder border = new ExcelBorder(null, wb.Styles, 0);           
             border.BottomStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-            border.BottomColor = lineColor;
+            border.BottomColor = LineColor;
             border.LeftStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-            border.LeftColor = lineColor;
+            border.LeftColor = LineColor;
             border.RightStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-            border.RightColor = lineColor;
+            border.RightColor = LineColor;
             border.TopStyle = OpenExcel.OfficeOpenXml.Style.ExcelBorderStyleValues.Thin;
-            border.TopColor = lineColor;
+            border.TopColor = LineColor;
             return border;
         }
 
@@ -196,20 +236,20 @@ namespace DHTMLX.Export.Excel
 		    cols = parser.getColumnsInfo("foot");
             ExcelBorder border = getBorder();  
 		    if (parser.getWithoutHeader() == false) {
-                ExcelFont font = wb.CreateFont("Arial", 10);
+                ExcelFont font = wb.CreateFont(FontFamily, FooterFontSize);
                 
                 font.Bold = true;
-                if (headerTextColor != "FF000000")
-                    font.Color = headerTextColor;
+                if (HeaderTextColor != "FF000000")
+                    font.Color = HeaderTextColor;
 			    for (uint row = 1; row <= cols.Length; row++) {
                     
                     uint rowInd = (uint)(row + headerOffset);
-                    sheet.Rows[rowInd].Height = 22.5;
+                    sheet.Rows[rowInd].Height = RowHeight;
                  
 				    for (uint col = 1; col <= cols[row-1].Length; col++) {
 					
-                        if (bgColor != "FFFFFFFF")
-                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = bgColor;
+                        if (BGColor != "FFFFFFFF")
+                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = BGColor;
                         sheet.Cells[rowInd, col].Style.Font = font;
                         //TODO add text color, vertical alignment, horizontal alignment
                         sheet.Cells[rowInd, col].Style.Border = border;
@@ -222,9 +262,9 @@ namespace DHTMLX.Export.Excel
 
 	    private void watermarkPrint(ExcelXmlParser parser){
 		    if (watermark == null) return;
-            ExcelFont font = wb.CreateFont("Arial", 10);
+            ExcelFont font = wb.CreateFont(FontFamily, WatermarkFontSize);
             font.Bold = true;
-            font.Color = watermarkTextColor;
+            font.Color = WatermarkTextColor;
             
 		    ExcelBorder border = getBorder();
 
@@ -239,7 +279,7 @@ namespace DHTMLX.Export.Excel
 		    this.rows_stat = rows.Length;
            
             ExcelBorder border = getBorder();
-            ExcelFont font = wb.CreateFont("Arial", 10);
+            ExcelFont font = wb.CreateFont(FontFamily, GridFontSize);
 
 		    for (uint row = 1; row <= rows.Length; row++) {
 			    ExcelCell[] cells = rows[row-1].getCells();
@@ -249,12 +289,12 @@ namespace DHTMLX.Export.Excel
 			    for (uint col = 1; col <= cells.Length; col++) {
                     if (cells[col - 1].GetBold() || cells[col - 1].GetItalic())
                     {
-                        ExcelFont curFont = wb.CreateFont("Arial", 10); ;
+                        ExcelFont curFont = wb.CreateFont(FontFamily, GridFontSize); ;
                        // if (gridTextColor != "FF000000")
                      //       font.Color = gridTextColor;
                         if (cells[col - 1].GetBold())
                             font.Bold = true;
-
+                        
                         if (cells[col - 1].GetItalic())
                             font.Italic = true;
 
@@ -275,12 +315,12 @@ namespace DHTMLX.Export.Excel
                     else 
                     {
 					    //Colour bg;
-                        if (row % 2 == 0 && scaleTwoColor != "FFFFFFFF")
+                        if (row % 2 == 0 && ScaleTwoColor != "FFFFFFFF")
                         {
-                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = scaleTwoColor;						
+                            sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = ScaleTwoColor;						
 					    } else {
-                            if (scaleOneColor != "FFFFFFFF")
-                                sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = scaleOneColor;
+                            if (ScaleOneColor != "FFFFFFFF")
+                                sheet.Cells[rowInd, col].Style.Fill.ForegroundColor = ScaleOneColor;
 					    }
 				    }
 
@@ -353,35 +393,45 @@ namespace DHTMLX.Export.Excel
 	    public int getRowsStat() {
 		    return this.rows_stat;
 	    }
-
+        private string _stripColor(string usersValue, string internalValue)
+        {
+            if (!string.IsNullOrEmpty(usersValue))
+            {
+                return usersValue.Replace("#", "");
+            }
+            else
+            {
+                return internalValue;
+            }
+        }
 	    private void setColorProfile() {
             var alpha = "FF";
 		    String profile = parser.getProfile();
 		    if ((profile.ToLower().Equals("color"))||profile.ToLower().Equals("full_color")) {
-                bgColor = alpha + "D1E5FE";
-                lineColor = alpha +  "A4BED4";
-                headerTextColor =alpha +  "000000";
-                scaleOneColor = alpha + "FFFFFF";
-                scaleTwoColor = alpha + "E3EFFF";
-                gridTextColor = alpha + "00FF00";
-                watermarkTextColor = alpha + "8b8b8b";
+                BGColor =           alpha + _stripColor(BGColor, "D1E5FE");
+                LineColor =         alpha + _stripColor(LineColor, "A4BED4");
+                HeaderTextColor =   alpha + _stripColor(HeaderTextColor, "000000");
+                ScaleOneColor =     alpha + _stripColor(ScaleOneColor, "FFFFFF");
+                ScaleTwoColor =     alpha + _stripColor(ScaleTwoColor, "E3EFFF");
+                GridTextColor =     alpha + _stripColor(GridTextColor, "00FF00");
+                WatermarkTextColor =alpha + _stripColor(WatermarkTextColor, "8b8b8b");
 		    } else {
 			    if (profile.ToLower().Equals("gray")) {
-                    bgColor =alpha +  "E3E3E3";
-                    lineColor = alpha + "B8B8B8";
-                    headerTextColor = alpha + "000000";
-                    scaleOneColor = alpha + "FFFFFF";
-                    scaleTwoColor = alpha + "EDEDED";
-                    gridTextColor = alpha + "000000";
-                    watermarkTextColor = alpha + "8b8b8b";
+                    BGColor =alpha + _stripColor(BGColor, "E3E3E3");
+                    LineColor = alpha + _stripColor(LineColor, "B8B8B8");
+                    HeaderTextColor = alpha + _stripColor(HeaderTextColor, "000000");
+                    ScaleOneColor = alpha + _stripColor(ScaleOneColor, "FFFFFF");
+                    ScaleTwoColor = alpha + _stripColor(ScaleTwoColor, "EDEDED");
+                    GridTextColor = alpha + _stripColor(GridTextColor, "000000");
+                    WatermarkTextColor = alpha + _stripColor(WatermarkTextColor, "8b8b8b");
 			    } else {
-                    bgColor = alpha + "FFFFFF";
-                    lineColor =alpha +  "000000";
-                    headerTextColor = alpha + "000000";
-                    scaleOneColor =alpha +  "FFFFFF";
-                    scaleTwoColor = alpha + "FFFFFF";
-                    gridTextColor = alpha + "000000";
-                    watermarkTextColor =alpha + "000000";
+                    BGColor = alpha + _stripColor(BGColor, "FFFFFF");
+                    LineColor =alpha +  _stripColor(LineColor, "000000");
+                    HeaderTextColor = alpha + _stripColor(HeaderTextColor, "000000");
+                    ScaleOneColor =alpha +  _stripColor(ScaleOneColor, "FFFFFF");
+                    ScaleTwoColor = alpha + _stripColor(ScaleTwoColor, "FFFFFF");
+                    GridTextColor = alpha + _stripColor(GridTextColor, "000000");
+                    WatermarkTextColor = alpha + _stripColor(WatermarkTextColor, "000000");
 			    }
 		    }
 	    }
