@@ -85,9 +85,9 @@ namespace DHTMLX.Export.Excel
                 insertFooter(parser, output);
                 watermarkPrint(parser);
          
-            wb.Dispose();
+                wb.Dispose();
             } catch (Exception e) {
-            //	    e.printStackTrace();
+                throw;
             }
         }
 

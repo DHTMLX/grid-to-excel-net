@@ -16,29 +16,34 @@ namespace DHTMLX.Export.Excel
         public void Parse(XmlElement parent)
         {
             is_footer = parent.ParentNode.ParentNode.Name.Equals("foot");
-          
-            if (parent.HasChildNodes)
-                colName = parent.FirstChild.Value;
+
+            XmlNode text_node = parent.FirstChild;
+            if (text_node != null)
+                colName = text_node.Value;
             else
                 colName = "";
 
-          
-            if (parent.HasAttribute("width"))
+            string width_string = parent.GetAttribute("width");
+
+            if (width_string.Length > 0)
             {
-                width = int.Parse(parent.Attributes["width"].Value);
+                if (!int.TryParse(width_string, out width))
+                    width = 0;
             }
 
             type = parent.GetAttribute("type");
             align = parent.GetAttribute("align");
-        
-            if (parent.HasAttribute("colspan"))
+            string colspan_string = parent.GetAttribute("colspan");
+            if (colspan_string.Length > 0)
             {
-                colspan = int.Parse(parent.Attributes["colspan"].Value);
+                if (!int.TryParse(colspan_string, out colspan))
+                    colspan = 0;
             }
-           
-            if (parent.HasAttribute("rowspan"))
+            string rowspan_string = parent.GetAttribute("rowspan");
+            if (rowspan_string.Length > 0)
             {
-                rowspan = int.Parse(parent.Attributes["rowspan"].Value);
+                if (!int.TryParse(rowspan_string, out rowspan))
+                    rowspan = 0;
             }
         }
 
