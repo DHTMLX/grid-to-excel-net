@@ -105,13 +105,15 @@ namespace DHTMLX.Export.Excel
                 for (int j = 0; j < columns[i].Length; j++)
                 {
 				    if (columns[i][j].GetColspan() > 0) {
-					    for (int k = j + 1; k < j + columns[i][j].GetColspan(); k++) {
+                        for (int k = j + 1; k < j + columns[i][j].GetColspan() && k < columns[i].Length; k++)
+                        {
+                           
 						    columns[i][j].SetWidth(columns[i][j].GetWidth() + columns[i][k].GetWidth());
 						    columns[i][k].SetWidth(0);
 					    }
 				    }
 				    if (columns[i][j].GetRowspan() > 0) {
-					    for (int k = i + 1; k < i + columns[i][j].GetRowspan(); k++) {
+					    for (int k = i + 1; k < i + columns[i][j].GetRowspan() && k < columns.Length; k++) {
 						    columns[i][j].SetHeight(columns[i][j].GetHeight() + 1);
 						    columns[k][j].SetHeight(0);
 					    }
