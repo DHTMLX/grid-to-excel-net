@@ -32,7 +32,7 @@ namespace DHTMLX.Export.Excel
         public string FontFamily { get; set; }
         public double GridFontSize { get; set; }
         public double WatermarkFontSize { get; set; }
-
+        public string OutputFileName { get; set; }
         public Dictionary<int, int> Widths { get; set; }
 
         public string BGColor { get; set; }
@@ -67,6 +67,7 @@ namespace DHTMLX.Export.Excel
             ScaleTwoColor = "";
             GridTextColor = "";
             WatermarkTextColor = "";
+            OutputFileName = "grid.xlsx";
         }
 
         public void Generate(string xml, Stream output){
@@ -133,7 +134,7 @@ namespace DHTMLX.Export.Excel
 
             resp.ContentType = ContentType;
 		    resp.HeaderEncoding = Encoding.UTF8;
-            resp.AppendHeader("Content-Disposition", "attachment;filename=grid.xlsx");
+            resp.AppendHeader("Content-Disposition", string.Format("attachment;filename={0}", OutputFileName));
 		    resp.AppendHeader("Cache-Control", "max-age=0");
             Generate(xml, data);
 
@@ -326,15 +327,11 @@ namespace DHTMLX.Export.Excel
 
                     
                     int intVal;
-                    double dbVal;
+              
 
                     if (int.TryParse(cells[col - 1].GetValue(), out intVal))
                     {
                         sheet.Cells[rowInd, col].Value = intVal;
-                    }
-                    else if (double.TryParse(cells[col - 1].GetValue(), out dbVal))
-                    {
-                        sheet.Cells[rowInd, col].Value = dbVal;
                     }
                     else
                     {
