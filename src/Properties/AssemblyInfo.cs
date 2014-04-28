@@ -8,10 +8,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("grid-excel-net")]
 [assembly: AssemblyDescription("dhtmlxGrid to excel export tool")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("DHTMLX LTD.")]
+[assembly: AssemblyCompany("Dinamenta, UAB")]
 [assembly: AssemblyProduct("grid-excel-net")]
-[assembly: AssemblyCopyright("Copyright © DHTMLX 2012")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("Copyright © 2014 Dinamenta, UAB")]
+[assembly: AssemblyTrademark("DHTMLX")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
